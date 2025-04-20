@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, ContextTypes, filters
 from datetime import datetime
@@ -11,7 +12,6 @@ logging.basicConfig(
          level=logging.INFO
      )
 logger = logging.getLogger(__name__)
-
      # Bot token
 TOKEN = "7646830910:AAGJxb0lBKNliW2lX_fr76SaVbA2vuhQJsw"
 
@@ -21,7 +21,6 @@ CHAT_ID = "7377279897"  # Your confirmed chat ID
 
      # Set timezone
 TIMEZONE = pytz.timezone("Asia/Kolkata")
-
 def days_until_exam():
          try:
              exam_date = datetime.strptime(EXAM_DATE, "%Y-%m-%d").replace(tzinfo=TIMEZONE)
@@ -90,7 +89,7 @@ async def main():
          # Schedule daily reminder at 10 AM
          app.job_queue.run_daily(
              callback=send_reminder,
-             time=datetime.now(TIMEZONE).time().replace(hour=15, minute=20, second=0),  # 10 AM
+             time=datetime.now(TIMEZONE).time().replace(hour=15, minute=25, second=0),  # 10 AM
              chat_id=CHAT_ID
          )
          
@@ -99,6 +98,8 @@ async def main():
          
          # Start the application
          logger.info("Starting bot with webhook: %s", WEBHOOK_URL)
+         port = int(os.getenv("PORT", 8443))  # Default Render port
+         logger.info("Listening on port: %d", port)
          await app.initialize()
          await app.start()
          
