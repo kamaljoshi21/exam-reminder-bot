@@ -17,7 +17,7 @@ TOKEN = "7646830910:AAGJxb0lBKNliW2lX_fr76SaVbA2vuhQJsw"
 
     # Fixed exam date and chat ID
 EXAM_DATE = "2025-09-12"
-CHAT_ID = "6830910"  # Your chat ID
+CHAT_ID = "7377279897"  # Updated with your chat ID
 
     # Set timezone
 TIMEZONE = pytz.timezone("Asia/Kolkata")
@@ -74,7 +74,7 @@ async def main():
         # Schedule daily reminder at 10 AM
         app.job_queue.run_daily(
             callback=send_reminder,
-            time=datetime.now(TIMEZONE).time().replace(hour=14, minute=30, second=0),  # 10 AM
+            time=datetime.now(TIMEZONE).time().replace(hour=14, minute=43, second=0),  # 10 AM
             chat_id=CHAT_ID
         )
         
