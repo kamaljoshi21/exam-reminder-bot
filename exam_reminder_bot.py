@@ -118,7 +118,7 @@ async def main():
         if data:
             app.job_queue.run_daily(
                 callback=send_reminder,
-                time=datetime.now(TIMEZONE).time().replace(hour=8, minute=00, second=0),  # 10 AM
+                time=datetime.now(TIMEZONE).time().replace(hour=14, minute=6, second=0),  # 10 AM
                 chat_id=data["chat_id"]
             )
         
