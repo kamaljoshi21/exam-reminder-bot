@@ -1,10 +1,8 @@
 import asyncio
 import logging
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, ContextTypes, filters
 from datetime import datetime
-import json
-import os
 import pytz
 
     # Set up logging
@@ -17,110 +15,71 @@ logger = logging.getLogger(__name__)
     # Bot token
 TOKEN = "7646830910:AAGJxb0lBKNliW2lX_fr76SaVbA2vuhQJsw"
 
-    # File to store exam date
-DATA_FILE = "exam_reminder_data.json"
+    # Fixed exam date and chat ID
+EXAM_DATE = "2025-09-12"
+CHAT_ID = "6830910"  # Your chat ID
 
     # Set timezone
 TIMEZONE = pytz.timezone("Asia/Kolkata")
 
-    # Helper functions
-def save_exam_date(date_str, chat_id):
-        data = {"exam_date": date_str, "chat_id": chat_id}
-        with open(DATA_FILE, "w") as f:
-            json.dump(data, f)
-
-def load_exam_date():
-        if os.path.exists(DATA_FILE):
-            with open(DATA_FILE, "r") as f:
-                return json.load(f)
-        return None
-
-def days_until_exam(exam_date_str):
+def days_until_exam():
         try:
-            exam_date = datetime.strptime(exam_date_str, "%Y-%m-%d").replace(tzinfo=TIMEZONE)
+            exam_date = datetime.strptime(EXAM_DATE, "%Y-%m-%d").replace(tzinfo=TIMEZONE)
             today = datetime.now(TIMEZONE)
             delta = exam_date - today
             return max(0, delta.days)
         except ValueError:
             return None
 
-    # Command handlers
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        logger.info("Received /start command from chat_id: %s", update.message.chat_id)
-        await update.message.reply_text(
-            "Welcome to @Dailyexamreminder! Use /setexam <YYYY-MM-DD> to set your exam date.\n"
-            "Example: /setexam 2025-12-31\n"
-            "I'll remind you daily how many days are left!"
-        )
-
-async def set_exam(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        chat_id = update.message.chat_id
-        logger.info("Received /setexam command from chat_id: %s with args: %s", chat_id, context.args)
-        args = context.args
-        if not args or len(args) != 1:
-            await update.message.reply_text("Please provide the exam date in YYYY-MM-DD format.\nExample: /setexam 2025-12-31")
-            return
-        date_str = args[0]
-        try:
-            datetime.strptime(date_str, "%Y-%m-%d")
-            save_exam_date(date_str, chat_id)
-            logger.info("Exam date set to %s for chat_id: %s", date_str, chat_id)
-            await update.message.reply_text(f"Exam date set to {date_str}. You'll get daily reminders!")
-            
-            # Schedule daily reminders (10 AM)
-            context.job_queue.run_daily(
-                callback=send_reminder,
-                time=datetime.now(TIMEZONE).time().replace(hour=10, minute=0, second=0),  # 10 AM
-                chat_id=chat_id
-            )
-        except ValueError:
-            await update.message.reply_text("Invalid date format. Use YYYY-MM-DD.\nExample: /setexam 2025-12-31")
-
 async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
-        job = context.job
-        chat_id = job.chat_id
-        logger.info("Sending reminder to chat_id: %s", chat_id)
-        data = load_exam_date()
-        if data and data["chat_id"] == chat_id:
-            days_left = days_until_exam(data["exam_date"])
-            if days_left is not None:
-                if days_left > 0:
-                    await context.bot.send_message(
-                        chat_id=chat_id,
-                        text=f"⚠️⚠️⚠️⚠️⚠️Reminder: {days_left} days left until your exam!⚠️⚠️⚠️⚠️⚠️"
-                    )
-                elif days_left == 0:
-                    await context.bot.send_message(
-                        chat_id=chat_id,
-                        text="Today is your exam day! All the best!"
-                    )
-                else:
-                    await context.bot.send_message(
-                        chat_id=chat_id,
-                        text="Your exam date has passed!"
-                    )
+        days_left = days_until_exam()
+        logger.info("Sending reminder to chat_id: %s", CHAT_ID)
+        if days_left is not None:
+            if days_left > 0:
+                await context.bot.send_message(
+                    chat_id=CHAT_ID,
+                    text=f"Reminder: {days_left} days left until your exam on {EXAM_DATE}!"
+                )
+            elif days_left == 0:
+                await context.bot.send_message(
+                    chat_id=CHAT_ID,
+                    text=f"Today is your exam day on {EXAM_DATE}! All the best!"
+                )
+            else:
+                await context.bot.send_message(
+                    chat_id=CHAT_ID,
+                    text=f"Your exam date {EXAM_DATE} has passed!"
+                )
 
-    # Main function with webhook
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        logger.info("Received message from chat_id: %s", update.message.chat_id)
+        days_left = days_until_exam()
+        if days_left is not None:
+            if days_left > 0:
+                await update.message.reply_text(f"You sent: {update.message.text}. Remaining days until your exam on {EXAM_DATE}: {days_left}!")
+            elif days_left == 0:
+                await update.message.reply_text(f"You sent: {update.message.text}. Today is your exam day on {EXAM_DATE}! All the best!")
+            else:
+                await update.message.reply_text(f"You sent: {update.message.text}. Your exam date {EXAM_DATE} has passed!")
+
 async def main():
         app = ApplicationBuilder().token(TOKEN).build()
         
         # Set webhook (replace with your Render URL)
-        WEBHOOK_URL = "https://exam-reminder-bot.onrender.com"  # Update this with your actual Render URL
+        WEBHOOK_URL = "https://exam-reminder-bot.onrender.com"  # Update with your actual Render URL
         await app.bot.set_webhook(url=WEBHOOK_URL)
         
         app.job_queue.scheduler.configure(timezone=TIMEZONE)
         
-        app.add_handler(CommandHandler("start", start))
-        app.add_handler(CommandHandler("setexam", set_exam))
+        # Schedule daily reminder at 10 AM
+        app.job_queue.run_daily(
+            callback=send_reminder,
+            time=datetime.now(TIMEZONE).time().replace(hour=14, minute=30, second=0),  # 10 AM
+            chat_id=CHAT_ID
+        )
         
-        # Check for existing exam date and schedule reminder
-        data = load_exam_date()
-        if data:
-            app.job_queue.run_daily(
-                callback=send_reminder,
-                time=datetime.now(TIMEZONE).time().replace(hour=14, minute=6, second=0),  # 10 AM
-                chat_id=data["chat_id"]
-            )
+        # Add message handler for any input
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
         
         # Start the application
         logger.info("Starting bot with webhook: %s", WEBHOOK_URL)
