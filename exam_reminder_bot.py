@@ -67,10 +67,10 @@ import asyncio
             logger.info("Exam date set to %s for chat_id: %s", date_str, chat_id)
             await update.message.reply_text(f"Exam date set to {date_str}. You'll get daily reminders!")
             
-            # Schedule daily reminders (e.g., 3 PM)
+            # Schedule daily reminders (now 10 AM)
             context.job_queue.run_daily(
                 callback=send_reminder,
-                time=datetime.now(TIMEZONE).time().replace(hour=15, minute=0, second=0),  # 3 PM
+                time=datetime.now(TIMEZONE).time().replace(hour=10, minute=0, second=0),  # 10 AM
                 chat_id=chat_id
             )
         except ValueError:
@@ -104,8 +104,8 @@ import asyncio
     async def main():
         app = ApplicationBuilder().token(TOKEN).build()
         
-        # Set webhook (replace with your Render URL, e.g., https://your-service-name.onrender.com)
-        WEBHOOK_URL = "https://exam-reminder-bot.onrender.com"  # Update this with your Render URL
+        # Set webhook (replace with your Render URL)
+        WEBHOOK_URL = "https://your-service-name.onrender.com"  # Update this after deploy
         await app.bot.set_webhook(url=WEBHOOK_URL)
         
         app.job_queue.scheduler.configure(timezone=TIMEZONE)
@@ -118,7 +118,7 @@ import asyncio
         if data:
             app.job_queue.run_daily(
                 callback=send_reminder,
-                time=datetime.now(TIMEZONE).time().replace(hour=13, minute=27, second=0),  # 3 PM
+                time=datetime.now(TIMEZONE).time().replace(hour=13, minute=5, second=0),  # 10 AM
                 chat_id=data["chat_id"]
             )
         
