@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
      # Bot token
 TOKEN = "7646830910:AAGJxb0lBKNliW2lX_fr76SaVbA2vuhQJsw"
 
-     # Fixed exam date
+     # Fixed exam date and chat ID
 EXAM_DATE = "2025-09-12"
 CHAT_ID = "7377279897"  # For scheduled reminders only
 
@@ -55,12 +55,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
          logger.info("Received message from chat_id: %s", update.message.chat_id)
          days_left = days_until_exam()
          if days_left is not None:
+             chat_id = update.message.chat_id
              if days_left > 0:
-                 await update.message.reply_text(f"You sent: {update.message.text}. Remaining days until your exam on {EXAM_DATE}: {days_left}!")
+                 await context.bot.send_message(
+                     chat_id=chat_id,
+                     text=f"You sent: {update.message.text}. Remaining days until your exam on {EXAM_DATE}: {days_left}!"
+                 )
              elif days_left == 0:
-                 await update.message.reply_text(f"You sent: {update.message.text}. Today is your exam day on {EXAM_DATE}! All the best!")
+                 await context.bot.send_message(
+                     chat_id=chat_id,
+                     text=f"You sent: {update.message.text}. Today is your exam day on {EXAM_DATE}! All the best!"
+                 )
              else:
-                 await update.message.reply_text(f"You sent: {update.message.text}. Your exam date {EXAM_DATE} has passed!")
+                 await context.bot.send_message(
+                     chat_id=chat_id,
+                     text=f"You sent: {update.message.text}. Your exam date {EXAM_DATE} has passed!"
+                 )
 
 async def main():
          app = ApplicationBuilder().token(TOKEN).build()
@@ -74,11 +84,11 @@ async def main():
          # Schedule daily reminder at 10 AM
          app.job_queue.run_daily(
              callback=send_reminder,
-             time=datetime.now(TIMEZONE).time().replace(hour=14, minute=55, second=0),  # 10 AM
+             time=datetime.now(TIMEZONE).time().replace(hour=14, minute=59, second=0),  # 10 AM
              chat_id=CHAT_ID
          )
          
-         # Add message handler for any input from any chat
+    # Add message handler for any input from any chat
          app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
          
          # Start the application
