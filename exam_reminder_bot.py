@@ -118,7 +118,7 @@ import asyncio
         if data:
             app.job_queue.run_daily(
                 callback=send_reminder,
-                time=datetime.now(TIMEZONE).time().replace(hour=13, minute=5, second=0),  # 10 AM
+                time=datetime.now(TIMEZONE).time().replace(hour=13, minute=35, second=0),  # 10 AM
                 chat_id=data["chat_id"]
             )
         
