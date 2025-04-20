@@ -87,7 +87,7 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
                 if days_left > 0:
                     await context.bot.send_message(
                         chat_id=chat_id,
-                        text=f"Reminder: {days_left} days left until your exam!"
+                        text=f"⚠️⚠️⚠️⚠️⚠️Reminder: {days_left} days left until your exam!⚠️⚠️⚠️⚠️⚠️"
                     )
                 elif days_left == 0:
                     await context.bot.send_message(
@@ -118,7 +118,7 @@ async def main():
         if data:
             app.job_queue.run_daily(
                 callback=send_reminder,
-                time=datetime.now(TIMEZONE).time().replace(hour=13, minute=47, second=0),  # 10 AM
+                time=datetime.now(TIMEZONE).time().replace(hour=13, minute=54, second=0),  # 10 AM
                 chat_id=data["chat_id"]
             )
         
