@@ -84,7 +84,7 @@ async def main():
          # Schedule daily reminder at 10 AM
          app.job_queue.run_daily(
              callback=send_reminder,
-             time=datetime.now(TIMEZONE).time().replace(hour=14, minute=59, second=0),  # 10 AM
+             time=datetime.now(TIMEZONE).time().replace(hour=15, minute=14, second=0),  # 10 AM
              chat_id=CHAT_ID
          )
          
