@@ -1,41 +1,41 @@
 import asyncio
-    import logging
-    from telegram import Update
-    from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-    from datetime import datetime
-    import json
-    import os
-    import pytz
+import logging
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from datetime import datetime
+import json
+import os
+import pytz
 
     # Set up logging
-    logging.basicConfig(
+logging.basicConfig(
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         level=logging.INFO
     )
-    logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
     # Bot token
-    TOKEN = "7646830910:AAGJxb0lBKNliW2lX_fr76SaVbA2vuhQJsw"
+TOKEN = "7646830910:AAGJxb0lBKNliW2lX_fr76SaVbA2vuhQJsw"
 
     # File to store exam date
-    DATA_FILE = "exam_reminder_data.json"
+DATA_FILE = "exam_reminder_data.json"
 
     # Set timezone
-    TIMEZONE = pytz.timezone("Asia/Kolkata")
+TIMEZONE = pytz.timezone("Asia/Kolkata")
 
     # Helper functions
-    def save_exam_date(date_str, chat_id):
+def save_exam_date(date_str, chat_id):
         data = {"exam_date": date_str, "chat_id": chat_id}
         with open(DATA_FILE, "w") as f:
             json.dump(data, f)
 
-    def load_exam_date():
+def load_exam_date():
         if os.path.exists(DATA_FILE):
             with open(DATA_FILE, "r") as f:
                 return json.load(f)
         return None
 
-    def days_until_exam(exam_date_str):
+def days_until_exam(exam_date_str):
         try:
             exam_date = datetime.strptime(exam_date_str, "%Y-%m-%d").replace(tzinfo=TIMEZONE)
             today = datetime.now(TIMEZONE)
@@ -45,7 +45,7 @@ import asyncio
             return None
 
     # Command handlers
-    async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.info("Received /start command from chat_id: %s", update.message.chat_id)
         await update.message.reply_text(
             "Welcome to @Dailyexamreminder! Use /setexam <YYYY-MM-DD> to set your exam date.\n"
@@ -53,7 +53,7 @@ import asyncio
             "I'll remind you daily how many days are left!"
         )
 
-    async def set_exam(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def set_exam(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chat_id = update.message.chat_id
         logger.info("Received /setexam command from chat_id: %s with args: %s", chat_id, context.args)
         args = context.args
@@ -76,7 +76,7 @@ import asyncio
         except ValueError:
             await update.message.reply_text("Invalid date format. Use YYYY-MM-DD.\nExample: /setexam 2025-12-31")
 
-    async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
+async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
         job = context.job
         chat_id = job.chat_id
         logger.info("Sending reminder to chat_id: %s", chat_id)
@@ -101,7 +101,7 @@ import asyncio
                     )
 
     # Main function with webhook
-    async def main():
+async def main():
         app = ApplicationBuilder().token(TOKEN).build()
         
         # Set webhook (replace with your Render URL)
@@ -118,7 +118,7 @@ import asyncio
         if data:
             app.job_queue.run_daily(
                 callback=send_reminder,
-                time=datetime.now(TIMEZONE).time().replace(hour=13, minute=39, second=0),  # 10 AM
+                time=datetime.now(TIMEZONE).time().replace(hour=10, minute=0, second=0),  # 10 AM
                 chat_id=data["chat_id"]
             )
         
@@ -137,7 +137,7 @@ import asyncio
             await app.stop()
             await app.shutdown()
 
-    if __name__ == "__main__":
+if __name__ == "__main__":
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
